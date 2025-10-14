@@ -1,5 +1,5 @@
 {
-    "name": "richardfrankza/craft-cloudflare-signed-transforms",
+    "name": "flowsa/craft-cloudflare-signed-transforms",
     "description": "Transform images and PDFs via Cloudflare Workers with HMAC-signed URLs",
     "type": "craft-plugin",
     "license": "mit",
