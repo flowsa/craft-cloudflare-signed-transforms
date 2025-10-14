@@ -1,0 +1,49 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = 'Cache Purge Utility'|t('cloudflare-signed-transforms') %}
+{% set selectedSubnavItem = 'settings' %}
+
+{% block content %}
+    <h1>{{ 'Cloudflare Cache Purge'|t('cloudflare-signed-transforms') }}</h1>
+
+    <p>{{ 'Manually purge cached images from Cloudflare. This will clear all transformed images, forcing them to be regenerated on next request.'|t('cloudflare-signed-transforms') }}</p>
+
+    {% set notice = craft.app.session.getFlash('notice') %}
+    {% set error = craft.app.session.getFlash('error') %}
+
+    {% if notice %}
+        <div class="notice success">
+            {{ notice }}
+        </div>
+    {% endif %}
+
+    {% if error %}
+        <div class="notice error">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <hr>
+
+    <h2>{{ 'Purge Everything'|t('cloudflare-signed-transforms') }}</h2>
+    <p class="warning">{{ 'WARNING: This will purge EVERYTHING in your Cloudflare zone, not just images! This includes all HTML, CSS, JS, and other cached files.'|t('cloudflare-signed-transforms') }}</p>
+
+    <form method="post" accept-charset="UTF-8" action="{{ actionUrl('cloudflare-signed-transforms/cache/purge-everything') }}">
+        {{ csrfInput() }}
+
+        <div class="buttons">
+            <button type="submit" class="btn submit" onclick="return confirm('WARNING: This will purge EVERYTHING in your Cloudflare zone!\n\nThis includes all HTML, CSS, JS, and other cached files.\n\nAre you absolutely sure?');">
+                {{ 'Purge Entire Zone Cache'|t('cloudflare-signed-transforms') }}
+            </button>
+        </div>
+    </form>
+
+    <hr>
+
+    <p>
+        <a href="{{ url('settings/plugins/cloudflare-signed-transforms') }}">
+            ← {{ 'Back to Plugin Settings'|t('cloudflare-signed-transforms') }}
+        </a>
+    </p>
+{% endblock %}

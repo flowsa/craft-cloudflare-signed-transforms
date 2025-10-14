@@ -1,0 +1,20 @@
+{# Asset Sidebar Button for Purging All Cache #}
+
+<div class="meta" style="margin-top: 14px;">
+    <h2 class="first">Cloudflare Cache</h2>
+
+    <form method="post" accept-charset="UTF-8">
+        {{ csrfInput() }}
+        {{ actionInput('cloudflare-signed-transforms/cache/purge-everything') }}
+        {{ redirectInput(asset.cpEditUrl) }}
+
+        <button type="submit" class="btn secondary fullwidth">
+            <span class="icon">{{ svg('@app/icons/trash.svg') }}</span>
+            Purge All Cache
+        </button>
+    </form>
+
+    <p class="light" style="margin-top: 7px; font-size: 11px;">
+        Purges entire Cloudflare zone cache for this website.
+    </p>
+</div>

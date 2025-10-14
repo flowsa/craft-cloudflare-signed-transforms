@@ -8,6 +8,8 @@ use craft\base\Plugin;
 use richardfrankza\cfst\models\Settings;
 use craft\imagetransforms\ImageTransformer as CraftImageTransformer;
 use craft\imagetransforms\FallbackTransformer;
+use craft\elements\Asset;
+use craft\events\DefineHtmlEvent;
 
 /**
  * Cloudflare Signed Transforms plugin
@@ -23,13 +25,40 @@ class CloudflareSignedTransforms extends Plugin
     public string $schemaVersion = '2.0.0';
     public bool $hasCpSettings = true;
 
+    public static function config(): array
+    {
+        return [
+            'components' => [],
+        ];
+    }
 
     public function init(): void
     {
         parent::init();
+
+        // Set controller namespace
+        $this->controllerNamespace = 'richardfrankza\cfst\controllers';
+
 		Craft::$app->getImages()->supportedImageFormats = ImageTransformer::SUPPORTED_IMAGE_FORMATS;
 		$this->overrideDefaultTransformer();
+
+        // Register CP routes
+        if (Craft::$app->getRequest()->getIsCpRequest()) {
+            $this->_registerCpRoutes();
+        }
     }
+
+    private function _registerCpRoutes(): void
+    {
+        \yii\base\Event::on(
+            \craft\web\UrlManager::class,
+            \craft\web\UrlManager::EVENT_REGISTER_CP_URL_RULES,
+            function(\craft\events\RegisterUrlRulesEvent $event) {
+                $event->rules['cloudflare-signed-transforms/cache'] = 'cloudflare-signed-transforms/cache/index';
+            }
+        );
+    }
+
 
 	/**
 	 * Injects the Cloudflare Signed transformer as default transformer

@@ -35,11 +35,11 @@ class ImageTransformer extends Component implements ImageTransformerInterface
         }
 
         if ($mimeType === 'image/gif' && !Craft::$app->getConfig()->getGeneral()->transformGifs) {
-            throw new NotSupportedException('GIF files shouldn't be transformed.');
+            throw new NotSupportedException('GIF files shouldn\'t be transformed.');
         }
 
         if ($mimeType === 'image/svg+xml' && !Craft::$app->getConfig()->getGeneral()->transformSvgs) {
-            throw new NotSupportedException('SVG files shouldn't be transformed.');
+            throw new NotSupportedException('SVG files shouldn\'t be transformed.');
         }
     }
 
@@ -51,8 +51,17 @@ class ImageTransformer extends Component implements ImageTransformerInterface
             throw new ImageTransformException('Worker URL and Signature Secret must be configured.');
         }
 
-        // Get the asset's public URL
-        $assetUrl = $this->asset->getUrl();
+        // Get the asset's original public URL (without transforms)
+        // We need to get the URL from the filesystem directly to avoid infinite loop
+        $volume = $this->asset->getVolume();
+        $fs = $volume->getFs();
+
+        if (!$fs->hasUrls) {
+            throw new ImageTransformException('Asset filesystem does not have public URLs.');
+        }
+
+        $assetUrl = rtrim($fs->getRootUrl(), '/') . '/' . $this->asset->getPath();
+
         if (!$assetUrl) {
             throw new ImageTransformException('Asset does not have a public URL.');
         }
@@ -137,17 +146,201 @@ class ImageTransformer extends Component implements ImageTransformerInterface
     }
 
     /**
-     * Cache invalidation - not implemented for worker-based transforms
+     * Purge cached transforms for an asset from Cloudflare's cache
+     *
+     * When an asset is updated or replaced, this purges the original URL from Cloudflare's cache.
+     * Since transforms are generated on-demand, purging the original also invalidates all variants.
+     *
+     * @param Asset $asset The asset whose transforms should be invalidated
+     * @return void
      */
     public function invalidateAssetTransforms(Asset $asset): void
     {
-        // Worker uses Cloudflare Cache API which doesn't support individual purging
-        // Future enhancement: add /purge endpoint to worker
+        $settings = CloudflareSignedTransforms::getInstance()->getSettings();
+
+        if (!$settings->enableCachePurge) {
+            return;
+        }
+
+        // Get the original asset URL (not a transform)
+        $volume = $asset->getVolume();
+        $fs = $volume->getFs();
+
+        if (!$fs->hasUrls) {
+            return;
+        }
+
+        $assetUrl = rtrim($fs->getRootUrl(), '/') . '/' . $asset->getPath();
+
+        // Queue a job to purge this URL from Cloudflare's cache
+        $job = new jobs\PurgeImageCache(['files' => [$assetUrl]]);
+        Craft::$app->getQueue()->push($job);
+
+        Craft::info("Queued cache purge for: {$assetUrl}", __METHOD__);
+    }
+
+    /**
+     * Purge cache for a specific asset
+     *
+     * Purges both the original asset URL and all worker-transformed versions
+     * by using Cloudflare's prefix-based purging.
+     *
+     * @param Asset $asset The asset to purge
+     * @return int Number of URLs queued for purging (always 1 for single asset)
+     */
+    public static function purgeAssetCache(Asset $asset): int
+    {
+        $settings = CloudflareSignedTransforms::getInstance()->getSettings();
+
+        if (!$settings->enableCachePurge) {
+            Craft::warning('Cache purge is not enabled', __METHOD__);
+            return 0;
+        }
+
+        $volume = $asset->getVolume();
+        $fs = $volume->getFs();
+
+        if (!$fs->hasUrls) {
+            Craft::warning('Asset volume does not have URLs', __METHOD__);
+            return 0;
+        }
+
+        // Get the asset URL
+        $assetUrl = rtrim($fs->getRootUrl(), '/') . '/' . $asset->getPath();
+
+        // Purge by prefix to catch all worker transforms for this asset
+        // The worker URL pattern is: thumbs.mediaserver.co.za/thumbs?url={assetUrl}&...
+        $workerUrl = rtrim($settings->workerUrl, '/');
+        $encodedAssetUrl = urlencode($assetUrl);
+        $workerPrefix = "{$workerUrl}/thumbs?url={$encodedAssetUrl}";
+
+        // Queue purge job with prefix
+        $job = new jobs\PurgeImageCache([
+            'files' => [$assetUrl],
+            'prefix' => $workerPrefix
+        ]);
+        Craft::$app->getQueue()->push($job);
+
+        Craft::info("Queued asset for cache purging. Original: {$assetUrl}, Worker prefix: {$workerPrefix}", __METHOD__);
+
+        return 1;
+    }
+
+    /**
+     * Purge all cached images for a specific volume
+     *
+     * This collects all asset URLs from a volume and queues them for cache purging.
+     * Use with caution - this can queue many jobs for large volumes.
+     *
+     * @param string $volumeHandle The handle of the volume to purge
+     * @return int Number of assets queued for purging
+     */
+    public static function purgeVolumeCache(string $volumeHandle): int
+    {
+        $settings = CloudflareSignedTransforms::getInstance()->getSettings();
+
+        if (!$settings->enableCachePurge) {
+            Craft::warning('Cache purge is not enabled', __METHOD__);
+            return 0;
+        }
+
+        // Get all assets from the volume
+        $assets = Asset::find()
+            ->volume($volumeHandle)
+            ->all();
+
+        if (empty($assets)) {
+            Craft::warning("No assets found in volume: {$volumeHandle}", __METHOD__);
+            return 0;
+        }
+
+        // Collect all asset URLs
+        $urls = [];
+        foreach ($assets as $asset) {
+            $volume = $asset->getVolume();
+            $fs = $volume->getFs();
+
+            if ($fs->hasUrls) {
+                $urls[] = rtrim($fs->getRootUrl(), '/') . '/' . $asset->getPath();
+            }
+        }
+
+        if (empty($urls)) {
+            Craft::warning('No URLs to purge', __METHOD__);
+            return 0;
+        }
+
+        // Queue purge job (Cloudflare allows up to 30 URLs per request, so batch them)
+        $batches = array_chunk($urls, 30);
+        foreach ($batches as $batch) {
+            $job = new jobs\PurgeImageCache(['files' => $batch]);
+            Craft::$app->getQueue()->push($job);
+        }
+
+        $count = count($urls);
+        Craft::info("Queued {$count} URLs for cache purging from volume: {$volumeHandle}", __METHOD__);
+
+        return $count;
+    }
+
+    /**
+     * Purge entire Cloudflare cache (nuclear option)
+     *
+     * WARNING: This purges EVERYTHING in your Cloudflare zone, not just images!
+     * Only use this if you need to clear absolutely everything.
+     *
+     * @return bool Success status
+     */
+    public static function purgeEverything(): bool
+    {
+        $settings = CloudflareSignedTransforms::getInstance()->getSettings();
+
+        if (!$settings->enableCachePurge) {
+            Craft::warning('Cache purge is not enabled', __METHOD__);
+            return false;
+        }
+
+        $zoneId = \craft\helpers\App::parseEnv($settings->zoneId);
+        $apiKey = \craft\helpers\App::parseEnv($settings->apiKey);
+
+        if (!$zoneId || !$apiKey) {
+            Craft::error('Zone ID or API Key not configured', __METHOD__);
+            return false;
+        }
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->post(
+                "https://api.cloudflare.com/client/v4/zones/{$zoneId}/purge_cache",
+                [
+                    \GuzzleHttp\RequestOptions::HEADERS => [
+                        'Authorization' => "Bearer {$apiKey}",
+                        'Content-Type' => 'application/json',
+                    ],
+                    \GuzzleHttp\RequestOptions::JSON => [
+                        'purge_everything' => true
+                    ]
+                ]
+            );
+
+            $success = $response->getStatusCode() === 200;
+
+            if ($success) {
+                Craft::info('Successfully purged entire Cloudflare cache', __METHOD__);
+            } else {
+                Craft::warning('Cloudflare purge returned status: ' . $response->getStatusCode(), __METHOD__);
+            }
+
+            return $success;
+        } catch (\Exception $e) {
+            Craft::error('Failed to purge Cloudflare cache: ' . $e->getMessage(), __METHOD__);
+            return false;
+        }
     }
 
     public function buildTransformParams(ImageTransform $imageTransform): Collection
     {
-        return Collection::make([
+        $params = [
             'width' => $imageTransform->width,
             'height' => $imageTransform->height,
             'quality' => $imageTransform->quality ?: Craft::$app->getConfig()->general->defaultImageQuality,
@@ -155,7 +348,10 @@ class ImageTransformer extends Component implements ImageTransformerInterface
             'fit' => $this->getFitValue($imageTransform),
             'background' => $this->getBackgroundValue($imageTransform),
             'gravity' => $this->getGravityValue($imageTransform),
-        ])->whereNotNull();
+        ];
+
+        // Filter out null values
+        return Collection::make(array_filter($params, fn($value) => $value !== null));
     }
 
     protected function getGravityValue(ImageTransform $imageTransform): ?string

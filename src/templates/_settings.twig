@@ -39,6 +39,55 @@
 
 <hr>
 
+<h2>{{ 'Cache Purging'|t('cloudflare-signed-transforms') }}</h2>
+
+{{ forms.lightswitchField({
+    label: 'Enable Cache Purge'|t('cloudflare-signed-transforms'),
+    instructions: 'Automatically purge cached images from Cloudflare when assets are updated or replaced.'|t('cloudflare-signed-transforms'),
+    id: 'enableCachePurge',
+    name: 'enableCachePurge',
+    on: settings.enableCachePurge
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Cloudflare Zone ID'|t('cloudflare-signed-transforms'),
+    instructions: 'Your Cloudflare Zone ID (found in Dashboard → Overview). Required for cache purging.'|t('cloudflare-signed-transforms'),
+    id: 'zoneId',
+    name: 'zoneId',
+    value: settings.zoneId,
+    errors: settings.getErrors('zoneId'),
+    suggestEnvVars: true,
+    placeholder: 'your-zone-id'
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Cloudflare API Key'|t('cloudflare-signed-transforms'),
+    instructions: 'API Token with "Zone.Cache Purge" permission. Create at: My Profile → API Tokens.'|t('cloudflare-signed-transforms'),
+    id: 'apiKey',
+    name: 'apiKey',
+    value: settings.apiKey,
+    errors: settings.getErrors('apiKey'),
+    type: 'password',
+    suggestEnvVars: true,
+    placeholder: 'your-api-token'
+}) }}
+
+<div class="field">
+    <div class="heading">
+        <label>{{ 'Manual Cache Purge'|t('cloudflare-signed-transforms') }}</label>
+        <div class="instructions">
+            <p>{{ 'Manually purge cached images from Cloudflare.'|t('cloudflare-signed-transforms') }}</p>
+        </div>
+    </div>
+    <div class="input">
+        <a href="{{ cpUrl('cloudflare-signed-transforms/cache') }}" class="btn">
+            {{ 'Go to Cache Purge Utility'|t('cloudflare-signed-transforms') }}
+        </a>
+    </div>
+</div>
+
+<hr>
+
 <div class="readable">
     <h2>{{ 'About Cloudflare Signed Transforms'|t('cloudflare-signed-transforms') }}</h2>
 
