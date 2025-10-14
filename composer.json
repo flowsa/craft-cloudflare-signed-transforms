@@ -1,15 +1,15 @@
 {
-    "name": "richardfrankza/craft-cloudflare-signed-transforms",
+    "name": "flowsa/craft-cloudflare-signed-transforms",
     "description": "Transform images and PDFs via Cloudflare Workers with HMAC-signed URLs",
     "type": "craft-plugin",
     "license": "mit",
     "keywords": ["craft", "cms", "craftcms", "cloudflare", "image", "transform", "pdf", "thumbnail", "signed-url", "hmac", "security"],
     "support": {
         "email": "richard@flow.co.za",
-        "issues": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms/issues?state=open",
-        "source": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms",
-        "docs": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms",
-        "rss": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms/releases.atom"
+        "issues": "https://github.com/flowsa/craft-cloudflare-signed-transforms/issues?state=open",
+        "source": "https://github.com/flowsa/craft-cloudflare-signed-transforms",
+        "docs": "https://github.com/flowsa/craft-cloudflare-signed-transforms",
+        "rss": "https://github.com/flowsa/craft-cloudflare-signed-transforms/releases.atom"
     },
     "require": {
         "php": ">=8.0.2",
@@ -21,15 +21,15 @@
     },
     "autoload": {
         "psr-4": {
-            "richardfrankza\\cfst\\": "src/"
+            "flowsa\\cfst\\": "src/"
         }
     },
     "extra": {
         "handle": "cloudflare-signed-transforms",
         "name": "Cloudflare Signed Transforms",
         "developer": "Richard Frank",
-        "documentationUrl": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms",
-        "class": "richardfrankza\\cfst\\CloudflareSignedTransforms"
+        "documentationUrl": "https://github.com/flowsa/craft-cloudflare-signed-transforms",
+        "class": "flowsa\\cfst\\CloudflareSignedTransforms"
     },
     "scripts": {
         "check-cs": "ecs check --ansi",

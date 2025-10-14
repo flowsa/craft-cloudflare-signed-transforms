@@ -1,11 +1,11 @@
 <?php
 
-namespace richardfrankza\cfst\controllers;
+namespace flowsa\cfst\controllers;
 
 use Craft;
 use craft\helpers\UrlHelper;
 use craft\web\Controller;
-use richardfrankza\cfst\ImageTransformer;
+use flowsa\cfst\ImageTransformer;
 use yii\web\Response;
 
 /**

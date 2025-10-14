@@ -1,13 +1,13 @@
 <?php
 
-namespace richardfrankza\cfst\jobs;
+namespace flowsa\cfst\jobs;
 
 use Craft;
 use craft\helpers\App;
 use craft\queue\BaseJob;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
-use richardfrankza\cfst\CloudflareSignedTransforms;
+use flowsa\cfst\CloudflareSignedTransforms;
 
 /**
  * Purge Image Cache job

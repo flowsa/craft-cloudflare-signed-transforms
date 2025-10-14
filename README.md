@@ -14,7 +14,7 @@ Transform images and PDFs in Craft CMS using Cloudflare Workers with HMAC-signed
 
 ## Prerequisites
 
-1. **Cloudflare Worker** - Deploy the companion worker from [cloudflare-pdf-thumbnaiker](https://github.com/richardfrankza/cloudflare-pdf-thumbnaiker)
+1. **Cloudflare Worker** - Deploy the companion worker from [cloudflare-pdf-thumbnaiker](https://github.com/flowsa/cloudflare-pdf-thumbnaiker)
 2. **Cloudflare Account** - With Browser Rendering and Images API enabled
 3. **Craft CMS** - Version 4.7.0+ or 5.0.0+
 4. **PHP** - Version 8.0.2 or higher
@@ -24,7 +24,7 @@ Transform images and PDFs in Craft CMS using Cloudflare Workers with HMAC-signed
 Install via Composer:
 
 ```bash
-composer require richardfrankza/craft-cloudflare-signed-transforms
+composer require flowsa/craft-cloudflare-signed-transforms
 php craft plugin/install cloudflare-signed-transforms
 ```
 
@@ -32,11 +32,11 @@ php craft plugin/install cloudflare-signed-transforms
 
 ### 1. Deploy the Cloudflare Worker
 
-Follow the setup instructions in the [worker repository](https://github.com/richardfrankza/cloudflare-pdf-thumbnaiker):
+Follow the setup instructions in the [worker repository](https://github.com/flowsa/cloudflare-pdf-thumbnaiker):
 
 ```bash
 # Clone the worker repository
-git clone https://github.com/richardfrankza/cloudflare-pdf-thumbnaiker.git
+git clone https://github.com/flowsa/cloudflare-pdf-thumbnaiker.git
 cd cloudflare-pdf-thumbnaiker
 
 # Install dependencies
@@ -232,5 +232,5 @@ MIT License - see [LICENSE.md](LICENSE.md)
 
 ## Support
 
-- [GitHub Issues](https://github.com/richardfrankza/craft-cloudflare-signed-transforms/issues)
-- [Worker Repository](https://github.com/richardfrankza/cloudflare-pdf-thumbnaiker)
+- [GitHub Issues](https://github.com/flowsa/craft-cloudflare-signed-transforms/issues)
+- [Worker Repository](https://github.com/flowsa/cloudflare-pdf-thumbnaiker)

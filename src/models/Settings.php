@@ -1,6 +1,6 @@
 <?php
 
-namespace richardfrankza\cfst\models;
+namespace flowsa\cfst\models;
 
 use Craft;
 use craft\base\Model;

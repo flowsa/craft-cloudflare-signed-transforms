@@ -1,11 +1,11 @@
 <?php
 
-namespace richardfrankza\cfst;
+namespace flowsa\cfst;
 
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
-use richardfrankza\cfst\models\Settings;
+use flowsa\cfst\models\Settings;
 use craft\imagetransforms\ImageTransformer as CraftImageTransformer;
 use craft\imagetransforms\FallbackTransformer;
 use craft\elements\Asset;
@@ -37,7 +37,7 @@ class CloudflareSignedTransforms extends Plugin
         parent::init();
 
         // Set controller namespace
-        $this->controllerNamespace = 'richardfrankza\cfst\controllers';
+        $this->controllerNamespace = 'flowsa\cfst\controllers';
 
 		Craft::$app->getImages()->supportedImageFormats = ImageTransformer::SUPPORTED_IMAGE_FORMATS;
 		$this->overrideDefaultTransformer();

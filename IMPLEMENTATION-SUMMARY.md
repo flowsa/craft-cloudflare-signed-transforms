@@ -9,8 +9,8 @@ Successfully created a Craft CMS plugin fork that integrates with your Cloudflar
 ## What Was Built
 
 ### 1. **Package Identity** (`composer.json`)
-- Package name: `richardfrankza/craft-cloudflare-signed-transforms`
-- Namespace: `richardfrankza\cfst`
+- Package name: `flowsa/craft-cloudflare-signed-transforms`
+- Namespace: `flowsa\cfst`
 - Handle: `cloudflare-signed-transforms`
 - Version: 2.0.0
 
@@ -49,7 +49,7 @@ Successfully created a Craft CMS plugin fork that integrates with your Cloudflar
 
 ### 4. **Main Plugin Class** (`src/CloudflareSignedTransforms.php`)
 - Renamed from `CloudflareImageTransforms` to `CloudflareSignedTransforms`
-- Updated namespace to `richardfrankza\cfst`
+- Updated namespace to `flowsa\cfst`
 - Schema version: `2.0.0`
 - Template path: `cloudflare-signed-transforms/_settings.twig`
 
@@ -128,7 +128,7 @@ git commit -m "Initial commit - v2.0.0"
 ### 2. Create GitHub Repository
 ```bash
 # Create new repository on GitHub: craft-cloudflare-signed-transforms
-git remote add origin git@github.com:richardfrankza/craft-cloudflare-signed-transforms.git
+git remote add origin git@github.com:flowsa/craft-cloudflare-signed-transforms.git
 git branch -M master
 git push -u origin master
 ```
@@ -141,13 +141,13 @@ git push origin v2.0.0
 
 ### 4. Publish to Packagist
 1. Go to https://packagist.org/packages/submit
-2. Enter repository URL: `https://github.com/richardfrankza/craft-cloudflare-signed-transforms`
+2. Enter repository URL: `https://github.com/flowsa/craft-cloudflare-signed-transforms`
 3. Submit package
 
 ### 5. Test Installation
 ```bash
 # In a Craft CMS project
-composer require richardfrankza/craft-cloudflare-signed-transforms
+composer require flowsa/craft-cloudflare-signed-transforms
 php craft plugin/install cloudflare-signed-transforms
 ```
 
@@ -216,8 +216,8 @@ npx wrangler secret put SIGNATURE_SECRET
 
 ## Support
 
-- Plugin Issues: https://github.com/richardfrankza/craft-cloudflare-signed-transforms/issues
-- Worker Issues: https://github.com/richardfrankza/cloudflare-pdf-thumbnaiker/issues
+- Plugin Issues: https://github.com/flowsa/craft-cloudflare-signed-transforms/issues
+- Worker Issues: https://github.com/flowsa/cloudflare-pdf-thumbnaiker/issues
 
 ---
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace richardfrankza\cfst;
+namespace flowsa\cfst;
 
 use Craft;
 use craft\base\Component;

@@ -7,8 +7,8 @@
 This is a complete rewrite forked from [craft-cloudflare-image-transforms](https://github.com/lenvanessen/craft-cloudflare-image-transforms) with significant architectural changes.
 
 **Breaking Changes:**
-- Renamed package from `lenvanessen/cloudflare-image-transforms` to `richardfrankza/craft-cloudflare-signed-transforms`
-- Changed namespace from `lenvanessen\cit` to `richardfrankza\cfst`
+- Renamed package from `lenvanessen/cloudflare-image-transforms` to `flowsa/craft-cloudflare-signed-transforms`
+- Changed namespace from `lenvanessen\cit` to `flowsa\cfst`
 - Removed `zoneId` and `apiKey` configuration (no longer needed)
 - Removed cache purge functionality (not applicable to worker-based transforms)
 - Changed URL format from `/cdn-cgi/image/...` to `/thumbs?url=...&signature=...`
@@ -33,7 +33,7 @@ This is a complete rewrite forked from [craft-cloudflare-image-transforms](https
 
 ### Migration from Original Plugin
 
-1. Deploy the [Cloudflare Worker](https://github.com/richardfrankza/cloudflare-pdf-thumbnaiker)
+1. Deploy the [Cloudflare Worker](https://github.com/flowsa/cloudflare-pdf-thumbnaiker)
 2. Set `SIGNATURE_SECRET` in your worker
 3. Update plugin configuration with worker URL and secret
 4. Remove old `zoneId` and `apiKey` settings
