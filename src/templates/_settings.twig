@@ -1,29 +1,69 @@
-{# @var plugin \lenvanessen\cit\CloudflareImageTransforms #}
-{# @var settings \lenvanessen\cit\models\Settings #}
-
-{% import '_includes/forms.twig' as forms %}
+{% import "_includes/forms" as forms %}
 
 {{ forms.autosuggestField({
-  label: "Zone ID",
-  id: 'zoneId',
-  name: 'zoneId',
-  suggestEnvVars: true,
-  value: settings.zoneId,
-  class: 'zone-id'
+    label: 'Worker URL'|t('cloudflare-signed-transforms'),
+    instructions: 'The base URL of your Cloudflare Worker (e.g., https://pdf-thumbnail-worker.your-domain.workers.dev)'|t('cloudflare-signed-transforms'),
+    id: 'workerUrl',
+    name: 'workerUrl',
+    value: settings.workerUrl,
+    errors: settings.getErrors('workerUrl'),
+    required: true,
+    suggestEnvVars: true,
+    placeholder: 'https://your-worker.workers.dev'
 }) }}
 
 {{ forms.autosuggestField({
-  label: "API Key",
-  id: 'apiKey',
-  name: 'apiKey',
-  suggestEnvVars: true,
-  value: settings.apiKey,
-  class: 'api-key'
+    label: 'Signature Secret'|t('cloudflare-signed-transforms'),
+    instructions: 'The HMAC secret key used to sign URLs. Must match the SIGNATURE_SECRET in your worker.'|t('cloudflare-signed-transforms'),
+    id: 'signatureSecret',
+    name: 'signatureSecret',
+    value: settings.signatureSecret,
+    errors: settings.getErrors('signatureSecret'),
+    required: true,
+    suggestEnvVars: true,
+    type: 'password',
+    placeholder: 'your-secret-key-here'
 }) }}
 
-{{ forms.lightswitchField({
- label: "Enable Cache Purge",
- instructions: "Should the cache be purged? This is only needed if your FS doesn't already do this",
- name: 'enableCachePurge',
- on: settings.enableCachePurge,
+{{ forms.textField({
+    label: 'Default Expiration (seconds)'|t('cloudflare-signed-transforms'),
+    instructions: 'Optional: Default time (in seconds) before signed URLs expire. Set to 0 for no expiration.'|t('cloudflare-signed-transforms'),
+    id: 'defaultExpiration',
+    name: 'defaultExpiration',
+    value: settings.defaultExpiration,
+    errors: settings.getErrors('defaultExpiration'),
+    type: 'number',
+    min: 0,
+    placeholder: '0'
 }) }}
+
+<hr>
+
+<div class="readable">
+    <h2>{{ 'About Cloudflare Signed Transforms'|t('cloudflare-signed-transforms') }}</h2>
+
+    <p>{{ 'This plugin transforms images and PDFs using a Cloudflare Worker with HMAC-signed URLs for security.'|t('cloudflare-signed-transforms') }}</p>
+
+    <h3>{{ 'Features'|t('cloudflare-signed-transforms') }}</h3>
+    <ul>
+        <li>{{ 'Works with any public HTTPS URL (not limited to Cloudflare-managed domains)'|t('cloudflare-signed-transforms') }}</li>
+        <li>{{ 'PDF support - automatically generates thumbnails from first page'|t('cloudflare-signed-transforms') }}</li>
+        <li>{{ 'HMAC-SHA256 signed URLs for security'|t('cloudflare-signed-transforms') }}</li>
+        <li>{{ 'Optional expiration timestamps for time-limited access'|t('cloudflare-signed-transforms') }}</li>
+        <li>{{ 'Full Cloudflare Images API transform support'|t('cloudflare-signed-transforms') }}</li>
+    </ul>
+
+    <h3>{{ 'Setup'|t('cloudflare-signed-transforms') }}</h3>
+    <ol>
+        <li>{{ 'Deploy the Cloudflare Worker from the repository'|t('cloudflare-signed-transforms') }}</li>
+        <li>{{ 'Set the SIGNATURE_SECRET in your worker using: npx wrangler secret put SIGNATURE_SECRET'|t('cloudflare-signed-transforms') }}</li>
+        <li>{{ 'Enter your worker URL and the same secret key above'|t('cloudflare-signed-transforms') }}</li>
+        <li>{{ 'Optionally configure default expiration time for signed URLs'|t('cloudflare-signed-transforms') }}</li>
+    </ol>
+
+    <p>
+        <a href="https://github.com/richardfrankza/craft-cloudflare-signed-transforms" target="_blank" rel="noopener">
+            {{ 'Documentation'|t('cloudflare-signed-transforms') }}
+        </a>
+    </p>
+</div>

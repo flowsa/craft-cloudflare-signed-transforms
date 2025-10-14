@@ -1,14 +1,15 @@
 {
-    "name": "lenvanessen/cloudflare-image-transforms",
-    "description": "Offloads image transformations to CloudFlare",
+    "name": "richardfrankza/craft-cloudflare-signed-transforms",
+    "description": "Transform images and PDFs via Cloudflare Workers with HMAC-signed URLs",
     "type": "craft-plugin",
     "license": "mit",
+    "keywords": ["craft", "cms", "craftcms", "cloudflare", "image", "transform", "pdf", "thumbnail", "signed-url", "hmac", "security"],
     "support": {
-        "email": "len@wndr.digital",
-        "issues": "https://github.com/lenvanessen/craft-cloudflare-image-transforms/issues?state=open",
-        "source": "https://github.com/lenvanessen/craft-cloudflare-image-transforms",
-        "docs": "https://github.com/lenvanessen/craft-cloudflare-image-transforms",
-        "rss": "https://github.com/lenvanessen/craft-cloudflare-image-transforms/releases.atom"
+        "email": "richard@flow.co.za",
+        "issues": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms/issues?state=open",
+        "source": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms",
+        "docs": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms",
+        "rss": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms/releases.atom"
     },
     "require": {
         "php": ">=8.0.2",
@@ -20,15 +21,15 @@
     },
     "autoload": {
         "psr-4": {
-            "lenvanessen\\cit\\": "src/"
+            "richardfrankza\\cfst\\": "src/"
         }
     },
     "extra": {
-        "handle": "cloudflare-image-transforms",
-        "name": "Cloudflare Image Transforms",
-        "developer": "Len van Essen",
-        "documentationUrl": "https://github.com/lenvanessen/craft-cloudflare-image-transforms",
-        "class": "lenvanessen\\cit\\CloudflareImageTransforms"
+        "handle": "cloudflare-signed-transforms",
+        "name": "Cloudflare Signed Transforms",
+        "developer": "Richard Frank",
+        "documentationUrl": "https://github.com/richardfrankza/craft-cloudflare-signed-transforms",
+        "class": "richardfrankza\\cfst\\CloudflareSignedTransforms"
     },
     "scripts": {
         "check-cs": "ecs check --ansi",

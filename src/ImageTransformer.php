@@ -1,21 +1,19 @@
 <?php
 
-namespace lenvanessen\cit;
+namespace richardfrankza\cfst;
 
 use Craft;
 use craft\base\Component;
 use craft\base\imagetransforms\ImageTransformerInterface;
 use craft\elements\Asset;
 use craft\errors\ImageTransformException;
-use craft\helpers\Html;
 use craft\models\ImageTransform;
 use Illuminate\Support\Collection;
-use lenvanessen\cit\jobs\PurgeImageCache;
 use yii\base\NotSupportedException;
 
 class ImageTransformer extends Component implements ImageTransformerInterface
 {
-    public const SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'gif', 'png', 'avif'];
+    public const SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'gif', 'png', 'avif', 'webp'];
     protected Asset $asset;
 
     public function getTransformUrl(Asset $asset, ImageTransform $imageTransform, bool $immediately): string
@@ -24,62 +22,127 @@ class ImageTransformer extends Component implements ImageTransformerInterface
         $this->assertTransformable();
 
         $params = $this->buildTransformParams($imageTransform);
-        return $this->assetUrl($params);
+        return $this->buildSignedUrl($params);
     }
 
     protected function assertTransformable(): void
     {
         $mimeType = $this->asset->getMimeType();
 
+        // PDFs are supported by the worker
+        if ($mimeType === 'application/pdf') {
+            return;
+        }
+
         if ($mimeType === 'image/gif' && !Craft::$app->getConfig()->getGeneral()->transformGifs) {
-            throw new NotSupportedException('GIF files shouldn’t be transformed.');
+            throw new NotSupportedException('GIF files shouldn't be transformed.');
         }
 
         if ($mimeType === 'image/svg+xml' && !Craft::$app->getConfig()->getGeneral()->transformSvgs) {
-            throw new NotSupportedException('SVG files shouldn’t be transformed.');
+            throw new NotSupportedException('SVG files shouldn't be transformed.');
         }
     }
-    
-    protected function assetUrl(Collection $params)
+
+    protected function buildSignedUrl(Collection $params): string
     {
-        $basePath = rtrim(
-            $this->asset->fs->getRootUrl() . $this->asset->getVolume()->getSubpath(),
-            '/'
-        );
+        $settings = CloudflareSignedTransforms::getInstance()->getSettings();
 
-
-        $directive = $params->map(fn($v, $k) => "$k=$v")->implode(',');
-        
-        $parts = parse_url($basePath);
-
-        // Get zone root URL from the provided asset filesystem root
-        // cdn-cgi is located at the zone root irrespective of where the FS root is on the zone
-        $base = '';
-        if (isset($parts['host'])) {
-            $auth = $parts['user'] ?? '';
-            if (isset($parts['pass'])) $auth .= ":" . ($parts['pass']);
-            if ($auth) $auth .= '@';
-            
-            $base = (isset($parts['scheme']) ? ($parts['scheme'] . ':') : '') . "//{$auth}{$parts['host']}" . (isset($parts['port']) ? (':' . $parts['port']) : '');
+        if (!$settings->workerUrl || !$settings->signatureSecret) {
+            throw new ImageTransformException('Worker URL and Signature Secret must be configured.');
         }
-        
-        return Html::encodeSpaces(
-            // Add the zone root URL, then add the path beyond the zone root as needed
-            "$base/cdn-cgi/image/$directive" . ($parts['path'] ?? '') . "/{$this->asset->getPath()}"
+
+        // Get the asset's public URL
+        $assetUrl = $this->asset->getUrl();
+        if (!$assetUrl) {
+            throw new ImageTransformException('Asset does not have a public URL.');
+        }
+
+        // Calculate expiration timestamp if configured
+        $expires = null;
+        if ($settings->defaultExpiration > 0) {
+            $expires = time() + $settings->defaultExpiration;
+        }
+
+        // Serialize transforms alphabetically for signature
+        $transformString = $this->serializeTransforms($params);
+
+        // Generate HMAC-SHA256 signature
+        $signature = $this->generateSignature(
+            $settings->signatureSecret,
+            $assetUrl,
+            $expires,
+            $transformString
         );
+
+        // Build query parameters
+        $queryParams = [
+            'url' => $assetUrl,
+            'signature' => $signature,
+        ];
+
+        if ($expires !== null) {
+            $queryParams['expires'] = (string)$expires;
+        }
+
+        // Add all transform parameters
+        foreach ($params as $key => $value) {
+            if ($value !== null) {
+                $queryParams[$key] = (string)$value;
+            }
+        }
+
+        // Build final URL
+        $workerUrl = rtrim($settings->workerUrl, '/');
+        $queryString = http_build_query($queryParams);
+
+        return "{$workerUrl}/thumbs?{$queryString}";
     }
 
     /**
-     * Cloudflare Images does not support purging resized variants individually. URLs starting with /cdn-cgi/ cannot be purged. However, purging of the original image’s URL will also purge all of its resized variants.
-     * @param Asset $asset
-     * @return void
+     * Generate HMAC-SHA256 signature
+     */
+    protected function generateSignature(string $secret, string $url, ?int $expires, string $transforms): string
+    {
+        // Build signature data: url|expires|transforms
+        $data = $url;
+
+        if ($expires !== null) {
+            $data .= "|{$expires}";
+        }
+
+        if (!empty($transforms)) {
+            $data .= "|{$transforms}";
+        }
+
+        return hash_hmac('sha256', $data, $secret);
+    }
+
+    /**
+     * Serialize transforms to canonical string (alphabetically sorted)
+     */
+    protected function serializeTransforms(Collection $params): string
+    {
+        $parts = [];
+
+        // Sort keys alphabetically
+        $sorted = $params->sortKeys();
+
+        foreach ($sorted as $key => $value) {
+            if ($value !== null) {
+                $parts[] = "{$key}={$value}";
+            }
+        }
+
+        return implode('&', $parts);
+    }
+
+    /**
+     * Cache invalidation - not implemented for worker-based transforms
      */
     public function invalidateAssetTransforms(Asset $asset): void
     {
-        if(CloudflareImageTransforms::getInstance()->getSettings()->enableCachePurge) {
-            $job = new PurgeImageCache(['files' => [$asset->getUrl()]]);
-            Craft::$app->getQueue()->push($job);
-        }
+        // Worker uses Cloudflare Cache API which doesn't support individual purging
+        // Future enhancement: add /purge endpoint to worker
     }
 
     public function buildTransformParams(ImageTransform $imageTransform): Collection
@@ -107,6 +170,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
 
         return "$value[0]x$value[1]";
     }
+
     protected function getGravity(ImageTransform $imageTransform): ?array
     {
         if ($this->asset->getHasFocalPoint()) {
@@ -117,16 +181,15 @@ class ImageTransformer extends Component implements ImageTransformerInterface
             return null;
         }
 
-        // TODO: maybe just do this in Craft
         $parts = explode('-', $imageTransform->position);
         $yPosition = $parts[0] ?? null;
         $xPosition = $parts[1] ?? null;
 
         try {
             $x = match ($xPosition) {
-                'top' => 0,
+                'left' => 0,
                 'center' => 0.5,
-                'bottom' => 1,
+                'right' => 1,
             };
             $y = match ($yPosition) {
                 'top' => 0,
@@ -151,9 +214,10 @@ class ImageTransformer extends Component implements ImageTransformerInterface
     {
         return match ($imageTransform->mode) {
             'fit' => $imageTransform->upscale ? 'contain' : 'scale-down',
-            'stretch', 'crop' => 'cover',
+            'stretch' => 'squeeze',
+            'crop' => 'cover',
             'letterbox' => 'pad',
-            default => 'crop',
+            default => 'scale-down',
         };
     }
 

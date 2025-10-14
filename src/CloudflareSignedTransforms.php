@@ -1,26 +1,26 @@
 <?php
 
-namespace lenvanessen\cit;
+namespace richardfrankza\cfst;
 
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
-use lenvanessen\cit\models\Settings;
+use richardfrankza\cfst\models\Settings;
 use craft\imagetransforms\ImageTransformer as CraftImageTransformer;
 use craft\imagetransforms\FallbackTransformer;
 
 /**
- * Cloudflare Image Transforms plugin
+ * Cloudflare Signed Transforms plugin
  *
- * @method static CloudflareImageTransforms getInstance()
+ * @method static CloudflareSignedTransforms getInstance()
  * @method Settings getSettings()
- * @author Len van Essen <len@wndr.digital>
- * @copyright Len van Essen
+ * @author Richard Frank <richard@flow.co.za>
+ * @copyright Richard Frank
  * @license MIT
  */
-class CloudflareImageTransforms extends Plugin
+class CloudflareSignedTransforms extends Plugin
 {
-    public string $schemaVersion = '1.0.0';
+    public string $schemaVersion = '2.0.0';
     public bool $hasCpSettings = true;
 
 
@@ -32,7 +32,7 @@ class CloudflareImageTransforms extends Plugin
     }
 
 	/**
-	 * Injects the CloudFlare transformer as default transformer
+	 * Injects the Cloudflare Signed transformer as default transformer
 	 */
 	protected function overrideDefaultTransformer(): void
 	{
@@ -54,7 +54,7 @@ class CloudflareImageTransforms extends Plugin
 
     protected function settingsHtml(): ?string
     {
-        return Craft::$app->view->renderTemplate('cloudflare-image-transforms/_settings.twig', [
+        return Craft::$app->view->renderTemplate('cloudflare-signed-transforms/_settings.twig', [
             'plugin' => $this,
             'settings' => $this->getSettings(),
         ]);
