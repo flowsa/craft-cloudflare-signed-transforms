@@ -47,7 +47,10 @@ class ImageTransformer extends Component implements ImageTransformerInterface
     {
         $settings = CloudflareSignedTransforms::getInstance()->getSettings();
 
-        if (!$settings->workerUrl || !$settings->signatureSecret) {
+        $workerUrl = \craft\helpers\App::parseEnv($settings->workerUrl);
+        $signatureSecret = \craft\helpers\App::parseEnv($settings->signatureSecret);
+
+        if (!$workerUrl || !$signatureSecret) {
             throw new ImageTransformException('Worker URL and Signature Secret must be configured.');
         }
 
@@ -68,8 +71,9 @@ class ImageTransformer extends Component implements ImageTransformerInterface
 
         // Calculate expiration timestamp if configured
         $expires = null;
-        if ($settings->defaultExpiration > 0) {
-            $expires = time() + $settings->defaultExpiration;
+        $defaultExpiration = (int)\craft\helpers\App::parseEnv($settings->defaultExpiration);
+        if ($defaultExpiration > 0) {
+            $expires = time() + $defaultExpiration;
         }
 
         // Serialize transforms alphabetically for signature
@@ -77,7 +81,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
 
         // Generate HMAC-SHA256 signature
         $signature = $this->generateSignature(
-            $settings->signatureSecret,
+            $signatureSecret,
             $assetUrl,
             $expires,
             $transformString
@@ -101,10 +105,9 @@ class ImageTransformer extends Component implements ImageTransformerInterface
         }
 
         // Build final URL
-        $workerUrl = rtrim($settings->workerUrl, '/');
         $queryString = http_build_query($queryParams);
 
-        return "{$workerUrl}/thumbs?{$queryString}";
+        return rtrim($workerUrl, '/') . "/thumbs?{$queryString}";
     }
 
     /**
@@ -210,7 +213,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
 
         // Purge by prefix to catch all worker transforms for this asset
         // The worker URL pattern is: thumbs.mediaserver.co.za/thumbs?url={assetUrl}&...
-        $workerUrl = rtrim($settings->workerUrl, '/');
+        $workerUrl = rtrim(\craft\helpers\App::parseEnv($settings->workerUrl), '/');
         $encodedAssetUrl = urlencode($assetUrl);
         $workerPrefix = "{$workerUrl}/thumbs?url={$encodedAssetUrl}";
 

@@ -84,7 +84,7 @@ class CacheController extends Controller
             if (!$success) {
                 Craft::$app->getSession()->setFlash('error', 'Failed to purge cache. Check that cache purging is enabled and configured.');
             } else {
-                Craft::$app->getSession()->setFlash('notice', 'Successfully purged entire Cloudflare cache');
+                Craft::$app->getSession()->setFlash('success', 'Successfully purged entire Cloudflare cache');
             }
         } catch (\Exception $e) {
             Craft::error('Failed to purge everything: ' . $e->getMessage(), __METHOD__);
